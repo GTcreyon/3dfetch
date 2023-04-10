@@ -14,7 +14,8 @@ local configs =
 {
 	showAnimation = true,
 	showSplash = true,
-	showCFW = true
+	showCFW = true,
+	customUID = ""
 }
 
 -- Configuration path
@@ -87,7 +88,13 @@ function setConfigs(configFileContent)
 		else
 			configOption = configPair[1]
 		end
-		configs[configOption] = "true" == configPair[2]
+
+		newValue = configPair[2]
+		if newValue == "true" then newValue = true end
+		if newValue == "false" then newValue = false end
+		if newValue == nil then newValue = "" end
+
+		configs[configOption] = newValue
 	end
 
 end
@@ -169,7 +176,9 @@ function getDateString()
 end
 
 function getUsernameString()
-	return System.getUsername()
+	username = configs.customUID
+	if (username == "") then username = System.getUsername() end
+	return username
 end
 
 function getCPUString(value)
@@ -373,7 +382,7 @@ function animatePrint(string, time)
 	System.sleep(time)
 end
 
-function animateInvocation()	
+function animateInvocation()
 	local ps = string.lower(getUsernameString()) .. "@" .. string.lower(getCPUString(1)) .. " ~ $ "
 	local commandString = "3dfetch_"
 
@@ -415,18 +424,23 @@ function showMenu()
 	Screen.refresh()
 
 	for option,value in pairs(configs) do
-		optionRects[option] = {val = value, x = cur_x, y = cur_y, end_x = cur_x + OPTION_RECT_SIZE["x"], end_y = cur_y + OPTION_RECT_SIZE["y"]}
-		cur_x = cur_x + OPTION_RECT_SIZE["x"] + 20 -- 20 is for padding
-		if (cur_x + OPTION_RECT_SIZE["x"] + 20 > 320) then 
-			cur_x = 20
-			cur_y = cur_y + OPTION_RECT_SIZE["y"] + 20
-		end
+		-- Only handle boolean options for now
+		-- TODO: Handle string options
+		-- TODO: Handle more than 3 options
+		if value == true or value == false then
+			optionRects[option] = {val = value, x = cur_x, y = cur_y, end_x = cur_x + OPTION_RECT_SIZE["x"], end_y = cur_y + OPTION_RECT_SIZE["y"]}
+			cur_x = cur_x + OPTION_RECT_SIZE["x"] + 20 -- 20 is for padding
+			if (cur_x + OPTION_RECT_SIZE["x"] + 20 > 320) then
+				cur_x = 20
+				cur_y = cur_y + OPTION_RECT_SIZE["y"] + 20
+			end
 
-		local currentRect = optionRects[option]
-		local color = ""
-		if value == true then color = colors.green else color = colors.red end
-		Screen.fillRect(currentRect["x"], currentRect["end_x"], currentRect["y"], currentRect["end_y"], color, BOTTOM_SCREEN)
-		Screen.debugPrint(currentRect["x"], (currentRect["y"] + currentRect["end_y"]) / 2, option, colors.black, BOTTOM_SCREEN)
+			local currentRect = optionRects[option]
+			local color = ""
+			if value == true then color = colors.green else color = colors.red end
+			Screen.fillRect(currentRect["x"], currentRect["end_x"], currentRect["y"], currentRect["end_y"], color, BOTTOM_SCREEN)
+			Screen.debugPrint(currentRect["x"], (currentRect["y"] + currentRect["end_y"]) / 2, option, colors.black, BOTTOM_SCREEN)
+		end
 	end
 
 	Screen.debugPrint(8, 217, "3dfetch Version: " .. tostring(fetchVer), colors.left, BOTTOM_SCREEN)
@@ -444,15 +458,14 @@ function showMenu()
 			Graphics.fillRect(0, 320, 0, 240, colors.background)
 			Graphics.termBlend()
 			Screen.refresh()
-			for option,rect in pairs(configs) do
-				local currentRect = optionRects[option]
-				if currentRect["x"] < touchPos_x and currentRect["end_x"] > touchPos_x and currentRect["y"] < touchPos_y and currentRect["end_y"] > touchPos_y then
+			for option,rect in pairs(optionRects) do
+				if rect["x"] < touchPos_x and rect["end_x"] > touchPos_x and rect["y"] < touchPos_y and rect["end_y"] > touchPos_y then
 					configs[option] = not configs[option]
 				end
 				local color = ""
 				if configs[option] == true then color = colors.green else color = colors.red end
-				Screen.fillRect(currentRect["x"], currentRect["end_x"], currentRect["y"], currentRect["end_y"], color, BOTTOM_SCREEN)
-				Screen.debugPrint(currentRect["x"], (currentRect["y"] + currentRect["end_y"]) / 2, option, colors.black, BOTTOM_SCREEN)
+				Screen.fillRect(rect["x"], rect["end_x"], rect["y"], rect["end_y"], color, BOTTOM_SCREEN)
+				Screen.debugPrint(rect["x"], (rect["y"] + rect["end_y"]) / 2, option, colors.black, BOTTOM_SCREEN)
 			end
 			Screen.debugPrint(8, 217, "3dfetch Version: " .. tostring(fetchVer), colors.left, BOTTOM_SCREEN)
 			Screen.flip()

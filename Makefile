@@ -6,12 +6,12 @@ bin/3dfetch.cia: ${CIA_DEPENDENCIES}
 
 # This one is for debugging purposes, some functionality is broken unless using a CIA
 .PHONY: 3dsx
-3dsx: bin/3dfetch.3dsx
+3dsx: clean bin/3dfetch.3dsx
 	@[ "${3DS_ADDRESS}" ] || ( echo "3DS_ADDRESS is not set. It should be the IPv4 address of your 3DS as shown in HBL."; exit 1 )
-	3dslink $< -a ${3DS_ADDRESS}
+	3dslink $(word 2,$^) -a ${3DS_ADDRESS}
 	
 .PHONY: cia
-cia: bin/3dfetch.cia
+cia: clean bin/3dfetch.cia
 	$(info **********  cia file built **********)
 
 bin/3dfetch.3dsx: bin/3dfetch.smdh
@@ -28,5 +28,4 @@ bin/3dfetch.smdh: bin/banner.bnr icon.png
 
 .PHONY: clean
 clean:
-	rm -rf bin
-	rm -rf 3ds
+	rm -rf bin/*
